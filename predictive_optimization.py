@@ -130,17 +130,17 @@ class PredictiveOptimizerCVXPY:
                     PCM_char_h[t] <= allocated_surplus_h[t],  # charge constraint  # noqa: E501
                     PCM_char_c[t] <= allocated_surplus_c[t],  # noqa: E501
                     PCM_disc_c[t] <= d_c[t] * (1 - u_c[t]),   # discharge constraint  # noqa: E501
-                    PCM_disc_h[t] <= d_h[t] * (1 - u_h[t])   # discharge constraint  # noqa: E501
+                    PCM_disc_h[t] <= d_h[t] * (1 - u_h[t])    # discharge constraint  # noqa: E501
                 ]
 
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(np.sum(surplus) - cp.sum(PCM_char_h + PCM_char_c))  # noqa: E501
+            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(PCM_disc_c + PCM_disc_h))  # noqa: E501  # np.sum(surplus) - cp.sum(PCM_char_h + PCM_char_c)
 
             # Formulate the problem
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -200,8 +200,8 @@ class PredictiveOptimizerCVXPY:
                 ]
 
             surplus = self.df.loc[time_series, self.obj].values - df_results_pcm['y_PCM_h'].values - df_results_pcm['y_PCM_c'].values   # noqa: E501
-            d_h = self.df.loc[time_series, 'D_H'].values - df_results_pcm['x_PCM_h'].values - df_results_pcm['x_PCM_h'].values      # noqa: E501
-            d_c = self.df.loc[time_series, 'D_C'].values - df_results_pcm['x_PCM_c'].values - df_results_pcm['x_PCM_c'].values      # noqa: E501
+            d_h = self.df.loc[time_series, 'D_H'].values - df_results_pcm['x_PCM_h'].values      # noqa: E501
+            d_c = self.df.loc[time_series, 'D_C'].values - df_results_pcm['x_PCM_c'].values      # noqa: E501
 
             cumulative_future_demand_h = [sum(d_h[t:self.T]) for t in range(self.T)]  # noqa: E501
             cumulative_future_demand_c = [sum(d_c[t:self.T]) for t in range(self.T)]  # noqa: E501
@@ -219,13 +219,13 @@ class PredictiveOptimizerCVXPY:
                 ]
 
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(np.sum(surplus) - cp.sum(TCM_char_h + TCM_char_c))  # noqa: E501
+            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(TCM_disc_c + TCM_disc_h))  # noqa: E501
 
             # Formulate the problem
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -234,10 +234,7 @@ class PredictiveOptimizerCVXPY:
                 'x_TCM_c': TCM_disc_c.value,
                 'y_TCM_c': TCM_char_c.value,
                 'SoC_TCM_h': SoC_TCM_h.value[:-1],
-                'SoC_TCM_c': SoC_TCM_c.value[:-1],
-                'Objective': np.array(
-                    [np.sum(surplus) - np.sum(TCM_char_h.value + TCM_char_c.value + df_results_pcm['y_PCM_h'].values + df_results_pcm['y_PCM_c'].values)] * self.T  # noqa: E501
-                    )
+                'SoC_TCM_c': SoC_TCM_c.value[:-1]
             }
 
             df_results_tcm = pd.DataFrame(results)
