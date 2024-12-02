@@ -140,7 +140,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -219,13 +219,13 @@ class PredictiveOptimizerCVXPY:
                 ]
 
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(TCM_disc_c + TCM_disc_h))  # noqa: E501
+            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(TCM_disc_c + TCM_disc_h))  # noqa: E501  # np.sum(surplus) - cp.sum(TCM_char_h + TCM_char_c)
 
             # Formulate the problem
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
