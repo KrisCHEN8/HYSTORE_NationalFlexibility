@@ -122,7 +122,6 @@ class PredictiveOptimizerCVXPY:
 
             # Charge and discharge constraints
             for t in range(self.T):
-
                 constraints += [
                     allocated_surplus_h[t] + allocated_surplus_c[t] <= surplus[t],  # noqa: E501
                     allocated_surplus_h[t] <= cp.maximum(0, cumulative_future_demand_h[t]) * surplus[t] * u_h[t],  # noqa: E501, this is to determine whether allocated_surplus eqquals to 0 or not
@@ -140,7 +139,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -225,7 +224,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
