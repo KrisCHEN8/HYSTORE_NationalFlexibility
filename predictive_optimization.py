@@ -140,7 +140,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -225,7 +225,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='CPLEX', verbose=False)     # MILP problem  # noqa: E501
+            problem.solve(solver='COPT', verbose=False)     # MILP problem  # noqa: E501
 
             # Extract results
             results = {
