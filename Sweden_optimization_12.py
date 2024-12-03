@@ -31,18 +31,24 @@ COP_df.index = time_series
 EER_df.index = time_series
 
 Cm_dict_ave = {
-    'Cm_h': 157664.92 * 0.001 * 12,   # MWh
-    'Cm_c': 0 * 0.001    # MWh
+    'Cm_h_PCM': 157664.92 * 0.001 * 12,  # MWh
+    'Cm_c_PCM': 0 * 0.001,               # MWh
+    'Cm_h_TCM': 157664.92 * 0.001 * 6,                       # MWh
+    'Cm_c_TCM': 0                        # MWh
 }
 
 Cm_dict_70p = {
-    'Cm_h': 1194809.98 * 0.001 * 12,   # MWh
-    'Cm_c': 0 * 0.001   # MWh
+    'Cm_h_PCM': 1194809.98 * 0.001 * 12,  # MWh
+    'Cm_c_PCM': 0 * 0.001,                # MWh
+    'Cm_h_TCM': 1194809.98 * 0.001 * 6,                        # MWh
+    'Cm_c_TCM': 0                         # MWh
 }
 
 Cm_dict_50p = {
-    'Cm_h': 182477.33 * 0.001 * 12,   # MWh
-    'Cm_c': 0 * 0.001   # MWh
+    'Cm_h_PCM': 182477.33 * 0.001 * 12,   # MWh
+    'Cm_c_PCM': 0 * 0.001,                # MWh
+    'Cm_h_TCM': 182477.33 * 0.001 * 6,                        # MWh
+    'Cm_c_TCM': 0                         # MWh
 }
 
 if solver == 'Pyomo':

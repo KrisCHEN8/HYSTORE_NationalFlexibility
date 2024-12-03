@@ -15,10 +15,10 @@ class PredictiveOptimizerCVXPY:
                  Cm_dict,               # The capacity dictionary of capacities for TCM and PCM  # noqa: E501
                  optimization_obj):     # Optimization objective, either surplus_all or surplus_RES  # noqa: E501
 
-        self.Cm_TCM_h = Cm_dict['Cm_h']                # Maximum energy storage capacity for TCM heating [MWh_thermal]  # noqa: E501
-        self.Cm_TCM_c = Cm_dict['Cm_c']                # Maximum energy storage capacity for TCM cooling [MWh_thermal]  # noqa: E501
-        self.Cm_PCM_h = Cm_dict['Cm_h']                # Maximum energy storage capacity for PCM heating [MWh_thermal]  # noqa: E501
-        self.Cm_PCM_c = Cm_dict['Cm_c']                # Maximum energy storage capacity for PCM heating [MWh_thermal]  # noqa: E501
+        self.Cm_TCM_h = Cm_dict['Cm_h_TCM']                # Maximum energy storage capacity for TCM heating [MWh_thermal]  # noqa: E501
+        self.Cm_TCM_c = Cm_dict['Cm_c_TCM']                # Maximum energy storage capacity for TCM cooling [MWh_thermal]  # noqa: E501
+        self.Cm_PCM_h = Cm_dict['Cm_h_PCM']                # Maximum energy storage capacity for PCM heating [MWh_thermal]  # noqa: E501
+        self.Cm_PCM_c = Cm_dict['Cm_c_PCM']                # Maximum energy storage capacity for PCM heating [MWh_thermal]  # noqa: E501
         self.eta_TCM_c_dis = 0.5                       # Efficiency of the TCM storage during cooling discharge [-]  # noqa: E501
         self.eta_TCM_h_dis = 1.1                       # Efficiency of the TCM storage during heating discharge [-]  # noqa: E501
         self.eta_TCM_ch = 1.0                          # Efficiency of the TCM storage during charge for both heating and cooling [-]  # noqa: E501
@@ -117,15 +117,15 @@ class PredictiveOptimizerCVXPY:
             d_h = self.df.loc[time_series, 'D_H'].values
             d_c = self.df.loc[time_series, 'D_C'].values
 
-            cumulative_future_demand_c = [sum(self.df.loc[time_series[t]:time_series[t]+timedelta(hours=self.T), 'D_C']) for t in range(self.T)]  # noqa: E501
-            cumulative_future_demand_h = [sum(self.df.loc[time_series[t]:time_series[t]+timedelta(hours=self.T), 'D_H']) for t in range(self.T)]  # noqa: E501
+            cumulative_future_demand_c = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_C']) for t in range(self.T)]  # noqa: E501
+            cumulative_future_demand_h = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_H']) for t in range(self.T)]  # noqa: E501
 
             # Charge and discharge constraints
             for t in range(self.T):
                 constraints += [
                     allocated_surplus_h[t] + allocated_surplus_c[t] <= surplus[t],  # noqa: E501
-                    allocated_surplus_h[t] <= cp.maximum(0, cumulative_future_demand_h[t]) * surplus[t] * u_h[t],  # noqa: E501, this is to determine whether allocated_surplus eqquals to 0 or not
-                    allocated_surplus_c[t] <= cp.maximum(0, cumulative_future_demand_c[t]) * surplus[t] * u_c[t],  # noqa: E501, this is to determine whether allocated_surplus eqquals to 0 or not
+                    allocated_surplus_h[t] <= cumulative_future_demand_h[t] * u_h[t],  # noqa: E501, this is to determine whether allocated_surplus eqquals to 0 or not
+                    allocated_surplus_c[t] <= cumulative_future_demand_c[t] * u_c[t],  # noqa: E501, this is to determine whether allocated_surplus eqquals to 0 or not
                     PCM_char_h[t] <= allocated_surplus_h[t],  # charge constraint  # noqa: E501
                     PCM_char_c[t] <= allocated_surplus_c[t],  # noqa: E501
                     PCM_disc_c[t] <= d_c[t] * (1 - u_c[t]),   # discharge constraint  # noqa: E501
@@ -205,12 +205,19 @@ class PredictiveOptimizerCVXPY:
             cumulative_future_demand_h = [sum(d_h[t:self.T]) for t in range(self.T)]  # noqa: E501
             cumulative_future_demand_c = [sum(d_c[t:self.T]) for t in range(self.T)]  # noqa: E501
 
+            cumulative_demand_c = cumulative_future_demand_c - df_results_pcm['x_PCM_c'].values  # noqa: E501
+            cumulative_demand_h = cumulative_future_demand_h - df_results_pcm['x_PCM_h'].values  # noqa: E501
+
             # Charge and discharge constraints
             for t in range(self.T):
+                # energy_c = ((SoC_TCM_c[t + 1] - self.SoC_TCM_min) / 100) * self.Cm_TCM_c / (self.alpha * self.eta_TCM_c_dis)  # noqa: E501
+                # energy_h = ((SoC_TCM_h[t + 1] - self.SoC_TCM_min) / 100) * self.Cm_TCM_h / (self.alpha * self.eta_TCM_h_dis)  # noqa: E501
                 constraints += [
                     allocated_surplus_h[t] + allocated_surplus_c[t] <= surplus[t],  # noqa: E501
-                    allocated_surplus_h[t] <= cp.maximum(0, cumulative_future_demand_h[t]) * surplus[t] * u_h[t],  # noqa: E501
-                    allocated_surplus_c[t] <= cp.maximum(0, cumulative_future_demand_c[t]) * surplus[t] * u_c[t],  # noqa: E501
+                    allocated_surplus_h[t] <= cumulative_demand_h[t] * u_h[t],  # noqa: E501
+                    allocated_surplus_c[t] <= cumulative_demand_c[t] * u_c[t],  # noqa: E501
+                    # energy_c <= cumulative_demand_c[t],
+                    # energy_h <= cumulative_demand_h[t],
                     TCM_char_h[t] <= allocated_surplus_h[t],  # charge constraint  # noqa: E501
                     TCM_char_c[t] <= allocated_surplus_c[t],  # noqa: E501
                     TCM_disc_c[t] <= d_c[t] * (1 - u_c[t]),   # discharge constraint  # noqa: E501
