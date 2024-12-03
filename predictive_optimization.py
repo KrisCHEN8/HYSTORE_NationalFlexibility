@@ -132,8 +132,15 @@ class PredictiveOptimizerCVXPY:
                     PCM_disc_h[t] <= d_h[t] * (1 - u_h[t])    # discharge constraint  # noqa: E501
                 ]
 
+            cooling_weight = []
+            heating_weight = []
+
+            for t in range(self.T):
+                cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
+                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
+
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(PCM_disc_c + PCM_disc_h) + np.sum(surplus) - cp.sum(PCM_char_h + PCM_char_c))  # noqa: E501  # np.sum(surplus) - cp.sum(PCM_char_h + PCM_char_c)
+            objective = cp.Minimize(cp.sum(d_h - cp.multiply(PCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(PCM_disc_c, cooling_weight)) + cp.sum(surplus - cp.multiply(PCM_char_h, heating_weight) - cp.multiply(PCM_char_c, cooling_weight)))  # noqa: E501
 
             # Formulate the problem
             problem = cp.Problem(objective, constraints)
@@ -210,22 +217,25 @@ class PredictiveOptimizerCVXPY:
 
             # Charge and discharge constraints
             for t in range(self.T):
-                # energy_c = ((SoC_TCM_c[t + 1] - self.SoC_TCM_min) / 100) * self.Cm_TCM_c / (self.alpha * self.eta_TCM_c_dis)  # noqa: E501
-                # energy_h = ((SoC_TCM_h[t + 1] - self.SoC_TCM_min) / 100) * self.Cm_TCM_h / (self.alpha * self.eta_TCM_h_dis)  # noqa: E501
                 constraints += [
                     allocated_surplus_h[t] + allocated_surplus_c[t] <= surplus[t],  # noqa: E501
                     allocated_surplus_h[t] <= cumulative_demand_h[t] * u_h[t],  # noqa: E501
                     allocated_surplus_c[t] <= cumulative_demand_c[t] * u_c[t],  # noqa: E501
-                    # energy_c <= cumulative_demand_c[t],
-                    # energy_h <= cumulative_demand_h[t],
                     TCM_char_h[t] <= allocated_surplus_h[t],  # charge constraint  # noqa: E501
                     TCM_char_c[t] <= allocated_surplus_c[t],  # noqa: E501
                     TCM_disc_c[t] <= d_c[t] * (1 - u_c[t]),   # discharge constraint  # noqa: E501
                     TCM_disc_h[t] <= d_h[t] * (1 - u_h[t])    # discharge constraint  # noqa: E501
                 ]
 
+            cooling_weight = []
+            heating_weight = []
+
+            for t in range(self.T):
+                cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
+                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
+
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(np.sum(d_h + d_c) - cp.sum(TCM_disc_c + TCM_disc_h) + np.sum(surplus) - cp.sum(TCM_char_h + TCM_char_c))  # noqa: E501  # np.sum(surplus) - cp.sum(TCM_char_h + TCM_char_c)
+            objective = cp.Minimize(cp.sum(d_h - cp.multiply(TCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(TCM_disc_c, cooling_weight)) + cp.sum(surplus - cp.multiply(TCM_char_h, heating_weight) - cp.multiply(TCM_char_c, cooling_weight)))  # noqa: E501
 
             # Formulate the problem
             problem = cp.Problem(objective, constraints)

@@ -31,18 +31,24 @@ COP_df.index = time_series
 EER_df.index = time_series
 
 Cm_dict_ave = {
-    'Cm_h': 254761.18 * 0.001 * 6,   # MWh
-    'Cm_c': 815840.28 * 0.001 * 6    # MWh
+    'Cm_h_PCM': 254761.18 * 0.001 * 12,    # MWh
+    'Cm_c_PCM': 815840.28 * 0.001 * 12,    # MWh
+    'Cm_h_TCM': 254761.18 * 0.001 * 12,    # MWh
+    'Cm_c_TCM': 815840.28 * 0.001 * 12     # MWh
 }
 
 Cm_dict_70p = {
-    'Cm_h': 521523.24 * 0.001 * 6,   # MWh
-    'Cm_c': 1989612.33 * 0.001 * 6   # MWh
+    'Cm_h_PCM': 521523.24 * 0.001 * 12,   # MWh
+    'Cm_c_PCM': 1989612.33 * 0.001 * 12,   # MWh
+    'Cm_h_TCM': 521523.24 * 0.001 * 12,   # MWh
+    'Cm_c_TCM': 1989612.33 * 0.001 * 12   # MWh
 }
 
 Cm_dict_50p = {
-    'Cm_h': 372516.60 * 0.001 * 6,   # MWh
-    'Cm_c': 1421151.66 * 0.001 * 6   # MWh
+    'Cm_h_PCM': 372516.60 * 0.001 * 12,   # MWh
+    'Cm_c_PCM': 1421151.66 * 0.001 * 12,   # MWh
+    'Cm_h_TCM': 372516.60 * 0.001 * 12,   # MWh
+    'Cm_c_TCM': 1421151.66 * 0.001 * 12    # MWh
 }
 
 if solver == 'PSO':
@@ -58,7 +64,7 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel('./res_6/IT/results_IT_aveCm_6.xlsx', index=True)
+    df_results.to_excel('./res_6/IT/results_IT_aveCm_v1.xlsx', index=True)
 
     # Cm_70%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, 12, COP_df['IT'], EER_df['IT'], Cm_dict_70p, 'surplus_RES')  # noqa: E501
@@ -69,7 +75,7 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel('./res_6/IT/results_IT_70PCm_6.xlsx', index=True)
+    df_results.to_excel('./res_6/IT/results_IT_70PCm_v1.xlsx', index=True)
 
     # Cm_50%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, 12, COP_df['IT'], EER_df['IT'], Cm_dict_50p, 'surplus_RES')  # noqa: E501
@@ -80,4 +86,4 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel('./res_6/IT/results_IT_50PCm_6.xlsx', index=True)
+    df_results.to_excel('./res_6/IT/results_IT_50PCm_v1.xlsx', index=True)

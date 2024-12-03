@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from predictive_optimization import PredictiveOptimizerCVXPY  # noqa: E501
+from predictive_optimization_v2 import PredictiveOptimizerCVXPY  # noqa: E501
 import warnings
 warnings.filterwarnings("ignore", message="loaded more than 1 DLL from .libs")
 
@@ -33,22 +33,22 @@ EER_df.index = time_series
 Cm_dict_ave = {
     'Cm_h_PCM': 157664.92 * 0.001 * 12,   # MWh
     'Cm_c_PCM': 1138.73 * 0.001 * 12,    # MWh
-    'Cm_h_TCM': 157664.92 * 0.001 * 6,   # MWh
-    'Cm_c_TCM': 1138.73 * 0.001 * 6    # MWh
+    'Cm_h_TCM': 157664.92 * 0.001 * 12,   # MWh
+    'Cm_c_TCM': 1138.73 * 0.001 * 12    # MWh
 }
 
 Cm_dict_70p = {
     'Cm_h_PCM': 255468.26 * 0.001 * 12,   # MWh
     'Cm_c_PCM': 2202.34 * 0.001 * 12,   # MWh
-    'Cm_h_TCM': 255468.26 * 0.001 * 6,   # MWh
-    'Cm_c_TCM': 2202.34 * 0.001 * 6   # MWh
+    'Cm_h_TCM': 255468.26 * 0.001 * 12,   # MWh
+    'Cm_c_TCM': 2202.34 * 0.001 * 12   # MWh
 }
 
 Cm_dict_50p = {
     'Cm_h_PCM': 182477.33 * 0.001 * 12,   # MWh
     'Cm_c_PCM': 1573.10 * 0.001 * 12,   # MWh
-    'Cm_h_TCM': 182477.33 * 0.001 * 6,   # MWh
-    'Cm_c_TCM': 1573.10 * 0.001 * 6   # MWh
+    'Cm_h_TCM': 182477.33 * 0.001 * 12,   # MWh
+    'Cm_c_TCM': 1573.10 * 0.001 * 12   # MWh
 }
 
 if solver == 'Pyomo':
