@@ -64,7 +64,7 @@ class PredictiveOptimizerCVXPY:
             PCM_char_c = cp.Variable(self.T, nonneg=True)  # Cooling PCM charge [MWh]
             SoC_PCM_c = cp.Variable(self.T + 1, pos=True)  # Cooling PCM SoC
             pcm_c_active = cp.Variable(self.T, boolean=True)
-            pcm_c_loss = cp.Variable(self.T)
+            pcm_c_loss = cp.Variable(self.T, nonneg=True)
 
             TCM_disc_c = cp.Variable(self.T, nonneg=True)  # Cooling TCM discharge [MWh]
             TCM_char_c = cp.Variable(self.T, nonneg=True)  # Cooling TCM charge [MWh]
@@ -96,16 +96,13 @@ class PredictiveOptimizerCVXPY:
                     SoC_PCM_c[t+1] - self.SoC_PCM_min >= (1 - pcm_c_active[t]) * -1e4,
                     SoC_PCM_c[t + 1] >= self.SoC_PCM_min,
                     SoC_PCM_c[t + 1] <= self.SoC_PCM_max,
-                    SoC_PCM_c[t + 1] == SoC_PCM_c[t] +
-                                        (PCM_char_c[t] * eer[t] - PCM_disc_c[t] * eer[t]) * self.eta_PCM -
-                                        pcm_c_loss[t],
+                    SoC_PCM_c[t + 1] == SoC_PCM_c[t] + 100 * ((PCM_char_c[t] * eer[t] - PCM_disc_c[t] * eer[t]) / self.Cm_PCM_c) * self.eta_PCM - pcm_c_loss[t],  # noqa: E501
                     SoC_TCM_c[t + 1] >= self.SoC_TCM_min,
                     SoC_TCM_c[t + 1] <= self.SoC_TCM_max,
-                    SoC_TCM_c[t + 1] == SoC_TCM_c[t] +
-                                        (TCM_char_c[t] * self.eta_TCM_ch - TCM_disc_c[t] * self.eta_TCM_c_dis) * self.alpha,
+                    SoC_TCM_c[t + 1] == SoC_TCM_c[t] + 100 * (((TCM_char_c[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_c[t] * self.eta_TCM_c_dis) * self.alpha) / self.Cm_TCM_c),   # noqa: E501
                     allocated_surplus_pcm[t] + allocated_surplus_tcm[t] <= surplus[t],
                     allocated_surplus_pcm[t] <= cumulative_future_demand_c[t] * u_c_pcm[t],
-                    allocated_surplus_tcm[t] <= (cumulative_future_demand_c[t]) * u_c_tcm[t],
+                    allocated_surplus_tcm[t] <= cumulative_future_demand_c[t] * u_c_tcm[t],
                     PCM_char_c[t] <= allocated_surplus_pcm[t],
                     TCM_char_c[t] <= allocated_surplus_tcm[t],
                     PCM_disc_c[t] + TCM_disc_c[t] <= d_c[t],
@@ -141,6 +138,8 @@ class PredictiveOptimizerCVXPY:
             PCM_disc_h = cp.Variable(self.T, nonneg=True)  # Heating PCM discharge [MWh]
             PCM_char_h = cp.Variable(self.T, nonneg=True)  # Heating PCM charge [MWh]
             SoC_PCM_h = cp.Variable(self.T + 1, pos=True)  # Heating PCM SoC
+            pcm_h_active = cp.Variable(self.T, boolean=True)
+            pcm_h_loss = cp.Variable(self.T, nonneg=True)
 
             TCM_disc_h = cp.Variable(self.T, nonneg=True)  # Heating TCM discharge [MWh]
             TCM_char_h = cp.Variable(self.T, nonneg=True)  # Heating TCM charge [MWh]
@@ -167,22 +166,23 @@ class PredictiveOptimizerCVXPY:
 
             for t in range(self.T):
                 constraints += [
+                    pcm_h_loss[t] == pcm_h_active[t] * self.f_loss_PCM,
+                    SoC_PCM_h[t + 1] - self.SoC_PCM_min <= pcm_h_active[t] * 1e4,
+                    SoC_PCM_h[t + 1] - self.SoC_PCM_min >= (1 - pcm_h_active[t]) * -1e4,
                     SoC_PCM_h[t + 1] >= self.SoC_PCM_min,
                     SoC_PCM_h[t + 1] <= self.SoC_PCM_max,
-                    SoC_PCM_h[t + 1] == SoC_PCM_h[t] +
-                                        (PCM_char_h[t] * cop[t] - PCM_disc_h[t] * cop[t]) * self.eta_PCM,
+                    SoC_PCM_h[t + 1] == SoC_PCM_h[t] + 100 * ((PCM_char_h[t] * cop[t] - PCM_disc_h[t] * cop[t]) / self.Cm_PCM_h) * self.eta_PCM - pcm_h_loss[t],  # noqa: E501
                     SoC_TCM_h[t + 1] >= self.SoC_TCM_min,
                     SoC_TCM_h[t + 1] <= self.SoC_TCM_max,
-                    SoC_TCM_h[t + 1] == SoC_TCM_h[t] +
-                                        (TCM_char_h[t] * self.eta_TCM_ch - TCM_disc_h[t] * self.eta_TCM_h_dis) * self.alpha,
+                    SoC_TCM_h[t + 1] == SoC_TCM_h[t] + 100 * (((TCM_char_h[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_h[t] * self.eta_TCM_h_dis) * self.alpha) / self.Cm_TCM_h),  # noqa: E501,
                     allocated_surplus_pcm[t] + allocated_surplus_tcm[t] <= surplus[t],
                     allocated_surplus_pcm[t] <= cumulative_future_demand_h[t] * u_h_pcm[t],
-                    allocated_surplus_tcm[t] <= (cumulative_future_demand_h[t]) * u_h_tcm[t],
+                    allocated_surplus_tcm[t] <= cumulative_future_demand_h[t] * u_h_tcm[t],
                     PCM_char_h[t] <= allocated_surplus_pcm[t],
                     TCM_char_h[t] <= allocated_surplus_tcm[t],
                     PCM_disc_h[t] + TCM_disc_h[t] <= d_h[t],
-                    PCM_disc_h[t] <= d_h[t] * (1-u_h_pcm[t]),
-                    TCM_disc_h[t] <= d_h[t] * (1-u_h_tcm[t])
+                    PCM_disc_h[t] <= d_h[t] * (1 - u_h_pcm[t]),
+                    TCM_disc_h[t] <= d_h[t] * (1 - u_h_tcm[t])
                 ]
 
             objective = cp.Minimize(cp.sum(d_h - (PCM_disc_h + TCM_disc_h)) +
