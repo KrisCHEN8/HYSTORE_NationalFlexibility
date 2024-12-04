@@ -8,8 +8,8 @@ Here is an overview of the project structure:
 
 - **COP&EER/**: Contains files related to the Coefficient of Performance (COP) and Energy Efficiency Ratio (EER).
 - **national_zones/**: Contains pickled data files and scripts for different national zones, including Spain, Italy, Austria, and Sweden.
-- **res_6/**: Annual simulation results for capacity pf 6-hours load.
-- **res_12/**: Annual simulation results for capacity pf 12-hours load.
+- **res_v1/**: Annual simulation results for capacity of version 1.
+- **res_v2/**: Annual simulation results for capacity of version 2.
 - **Dati_capacities_scenarios.xlsx**: Excel file containing data scenarios on capacities.
 - **Austria_optimization.py**: Optimization simulation script specific to Austria.
 - **Italy_optimization.py**: Optimization simulation script specific to Italy.
