@@ -110,8 +110,8 @@ class PredictiveOptimizerCVXPY:
                     TCM_disc_c[t] <= d_c[t] * (1-u_c_tcm[t])
                 ]
 
-            objective = cp.Minimize(cp.sum(d_c - (PCM_disc_c + TCM_disc_c)) +
-                                    cp.sum(surplus - (PCM_char_c + TCM_char_c)))
+            objective = cp.Minimize(cp.sum(d_c - (10 * PCM_disc_c + TCM_disc_c)) +
+                                    cp.sum(surplus - (10 * PCM_char_c + TCM_char_c)))
 
             problem = cp.Problem(objective, constraints)
             problem.solve(solver='CPLEX', verbose=False)
@@ -185,8 +185,8 @@ class PredictiveOptimizerCVXPY:
                     TCM_disc_h[t] <= d_h[t] * (1 - u_h_tcm[t])
                 ]
 
-            objective = cp.Minimize(cp.sum(d_h - (PCM_disc_h + TCM_disc_h)) +
-                                    cp.sum(surplus - (PCM_char_h + TCM_char_h)))
+            objective = cp.Minimize(cp.sum(d_h - (10 * PCM_disc_h + TCM_disc_h)) +
+                                    cp.sum(surplus - (10 * PCM_char_h + TCM_char_h)))
 
             problem = cp.Problem(objective, constraints)
             problem.solve(solver='CPLEX', verbose=False)
