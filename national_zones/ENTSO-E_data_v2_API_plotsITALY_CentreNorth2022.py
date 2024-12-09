@@ -4,12 +4,12 @@ import numpy as np
 from entsoe import EntsoePandasClient
 
 
-# parameters
+#parameters
 start = pd.Timestamp('20220101', tz='Europe/Rome')
 end = pd.Timestamp('20230101', tz='Europe/Rome')
-country_code = 'IT_CNOR'
-range_time_load = "15T"
-range_time_generation = "15T"
+country_code = 'IT_CNOR' 
+range_time_load="15T"
+range_time_generation="15T"
 
 
 column_names_load = ["Actual load"]
@@ -21,10 +21,7 @@ client = EntsoePandasClient(api_key='5b6c09de-3782-4898-a937-dcb08794deba')
 #make queries to generate the dataframes
 df_load = client.query_load(country_code, start=start, end=end)
 df_generation=client.query_generation(country_code, start=start, end=end, psr_type=None)
-#df_generation=pd.read_csv('df_generation.txt',skiprows=2,header=None)
-#df_generation.to_csv('df_generation_pandas.txt')
 current_columns_generation = df_generation.columns.tolist()
-#df_generation.to_csv('df_generation.txt')
 current_columns_load = df_load.columns.tolist()
 
 # Replace the column names
@@ -35,13 +32,12 @@ df_generation_initial=df_generation.copy()
 #Add index values for future use in plots
 df_generation['Time'] = df_generation.index.values
 
-print(df_generation)
-
-#df_generation['Time'] = df_generation.index.values
+print(df_generation.columns)
+print(df_generation.head())
 
 #create the simplified dataframe with resources joined by type
-column_indices_fossil = [1,2,5]
-column_indices_renewables=[0,4,7,8]
+column_indices_fossil = [1,2,6]
+column_indices_renewables=[0,3,4,7,8]
 column_indices_storage=[5]
 
 sum_fossil = df_generation.iloc[:, column_indices_fossil].sum(axis=1)
@@ -77,9 +73,7 @@ df_simplified=df_complete[columns_to_extract].copy()
 df_simplified_calc = df_simplified.copy()
 df_simplified_calc['surplus_all'] = df_simplified_calc['Fossil'] + df_simplified_calc['Renewables'] - df_simplified_calc['Actual load']
 df_simplified_calc['surplus_RES'] = df_simplified_calc['Renewables'] - df_simplified_calc['Actual load']
-# 
-# df_simplified['surplus_all']= df_simplified['Fossil']+df_simplified['Renewables']-df_simplified['Actual load']
-# df_simplified['surplus_RES']= df_simplified['Renewables']-df_simplified['Actual load']
+
 
 #overall sums
 overall_surplus=df_simplified_calc.loc[df_simplified_calc['surplus_all'] >0, 'surplus_all'].sum()
@@ -152,56 +146,123 @@ df_simplified_hourly = df_simplified_calc.resample('h').mean()
 df_simplified_hourly['month'] = df_simplified_hourly.Time.dt.month
 df_simplified_hourly['day'] = df_simplified_hourly.Time.dt.day
 df_simplified_hourly['hour'] = df_simplified_hourly.Time.dt.hour
-df_simplified_hourly['week'] = df_simplified_hourly.index.isocalendar().week
-# Extract hour of the week (0 to 167) from the datetime index
-df_simplified_hourly['hour_of_week'] = (df_simplified_hourly.index.dayofweek * 24) + df_simplified_hourly.index.hour
-
+df_simplified_hourly['Time [weeks of year]'] = df_simplified_hourly.index.isocalendar().week
+# Extract hour of the week (Time [hh of week] to 167) from the datetime index
+df_simplified_hourly['Time [hh of week]'] = (df_simplified_hourly.index.dayofweek * 24) + df_simplified_hourly.index.hour
 
 all_week_year_df = pd.pivot_table(df_simplified_hourly, values="surplus_RES",
-                                   index=["hour_of_week"],
-                                   columns=["week"],
+                                   index=["Time [hh of week]"],
+                                   columns=["Time [weeks of year]"],
                                    fill_value=0,
                                    margins=True)
-ax = sns.heatmap(all_week_year_df, cmap='RdYlGn',
+
+# Create the heatmap with a color map that has high variation
+ax = sns.heatmap(all_week_year_df, cmap='rainbow',
                  robust=True,
                  fmt='.2f',
                  annot=False,
                  linewidths=.5,
                  annot_kws={'size':11},
                  cbar_kws={'shrink':.8,
-                           'label':'Surplus (MWh)'})                       
-    
-ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=14)
-ax.set_xticklabels(ax.get_xticklabels(), rotation=0, fontsize=14)
+                           'label':'Energy surplus [MWh]',
+                           'pad': 0.02})
+
+# Access the ScalarMappable object to set the color limits
+cax = ax.collections[0]  #access the first collection to set color limits
+cbar = cax.colorbar  #get the color bar from the collection
+cax.set_clim(vmin=all_week_year_df.values.min(), vmax=all_week_year_df.values.max())  # **Set color limits**
+cbar.ax.tick_params(labelsize=14)  #Imposta la dimensione dei numeri della color bar
+
+# Set font size for the color bar label
+cbar.set_label('Energy surplus [MWh]', fontsize=14)
+
+ax.set_yticklabels(ax.get_yticklabels(), rotation=0, fontsize=16)
+ax.set_xticklabels(ax.get_xticklabels(), rotation=0, fontsize=16)
 
 # Reverse the y-axis
 ax.invert_yaxis()
 
 # Increase font size for the color bar (legend) and axes labels
-ax.figure.axes[-1].yaxis.label.set_size(14)  # Font size for color bar label
-ax.tick_params(axis='both', labelsize=14)  # Font size for x and y axis labels
+ax.figure.axes[-1].yaxis.label.set_size(16)  # Font size for color bar label
+ax.tick_params(axis='both', labelsize=16)  # Font size for x and y axis labels
 #plt.savefig("heatmap.png", dpi=300, bbox_inches='tight')
+ax.set_xlabel('Time [weeks of year]', fontsize=20)  # Set font size for x-axis label
+ax.set_ylabel('Time [hh of week]', fontsize=20)
 
 plt.show()
-# 
-##create stacked plot with monthly values
-df_generation_hourly = df_generation_initial.resample('h').mean()
 
-# Resample simplified hourly dataframe to monthly sums
+
+
+
+#STACKED AREA GRAPH
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+
+# Esegui il resampling e il calcolo dei totali mensili, se non è già stato fatto.
+df_generation_hourly = df_complete.resample('h').mean()
+df_generation_hourly = df_generation_hourly.select_dtypes(exclude=['datetime', 'timedelta'])
 monthly_sums = df_generation_hourly.groupby(pd.Grouper(freq="ME")).sum()
 
-# Create a stacked area plot
-plt.figure(figsize=(10, 6))
-plt.stackplot(monthly_sums.index, monthly_sums.T, labels=monthly_sums.columns, cmap='tab20c')
-plt.xlabel("Time")
-plt.ylabel("Energy Production/ MWh")
-# Set x-axis ticks to show month names
-plt.xticks(ticks=monthly_sums.index, labels=monthly_sums.index.strftime("%b %Y"), rotation=45, ha="right")
-plt.legend(loc='upper right')
+# Seleziona le colonne di interesse, ad esempio:
+selected_columns_indices = [1,2,0,3,4,6,7,8,5]
+selected_columns = monthly_sums.columns[selected_columns_indices]
+
+# Controlla che la colonna "Solar" sia inclusa, se necessario:
+if 'Solar' not in selected_columns:
+    print("Errore: la colonna 'Solar' non è stata inclusa.")
+else:
+    print("La colonna 'Solar' è stata inclusa.")
+
+# Crea il DataFrame con le colonne selezionate.
+monthly_sums_selected = monthly_sums[selected_columns]
+
+# Filtra le colonne con valori non nulli.
+non_zero_columns = monthly_sums_selected.loc[:, (monthly_sums_selected != 0).any(axis=0)]
+
+# Genera mappa colori per le colonne usate
+cmap = plt.colormaps['tab20']
+colors = cmap(np.linspace(0, 1, len(non_zero_columns.columns)))
+
+# Crea i handles per la legenda
+handles = [plt.Rectangle((0, 0), 1, 1, color=color, ec="k") for color in colors]
+labels = [str(col) for col in non_zero_columns.columns]  # Assicura che i labels siano stringhe
+
+# Crea il grafico ad area
+plt.figure(figsize=(12, 8))
+ax = plt.gca()
+plt.stackplot(
+    non_zero_columns.index,
+    non_zero_columns.T,
+    colors=colors
+)
+plt.xlabel("Time [MM-yyyy]", fontsize=16)
+plt.ylabel("Energy Production [MWh]", fontsize=16)
+
+# Etichette asse x
+plt.xticks(
+    ticks=non_zero_columns.index,
+    labels=non_zero_columns.index.strftime("%Y-%m"),
+    rotation=0,  # Mantiene l'angolazione invariata
+    ha="right",
+    fontsize=14
+)
+
+# Aggiungi la legenda
+cbar = plt.legend(
+    handles=handles,
+    labels=labels,
+    loc='center left',
+    bbox_to_anchor=(1, 0.5),
+    fontsize=14
+)
+
+# Rimuovi i margini dagli assi verticali
+ax.margins(x=0, y=0)
+
+# Migliora il layout
 plt.tight_layout()
 
-plt.title("Monthly Energy Production by Source")
-
+# Mostra il grafico
 plt.show()
-
-df_simplified_calc.to_pickle('df_IT_CNOR.pkl')

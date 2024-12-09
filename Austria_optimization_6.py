@@ -16,8 +16,8 @@ df_demand = pd.read_pickle(os.path.join(pickle_path, 'df_demand.pkl'))
 time_series = pd.date_range(start='2022-01-01 00:00:00', periods=8760, freq='1h')  # noqa: E501
 
 # Input data
-D_H = df_demand['Spain_heating_kWh'].values * 0.001  # be consistant with the country in line 7  # noqa: E501
-D_C = df_demand['Spain_cooling_kWh'].values * 0.001  # be consistant with the country in line 7  # noqa: E501
+D_H = df_demand['Austria_heating_kWh'].values * 0.001  # be consistant with the country in line 7  # noqa: E501
+D_C = df_demand['Austria_cooling_kWh'].values * 0.001  # be consistant with the country in line 7  # noqa: E501
 
 
 df_demand.index = time_series

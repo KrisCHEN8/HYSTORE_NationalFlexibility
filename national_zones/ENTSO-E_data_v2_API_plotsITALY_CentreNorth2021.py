@@ -203,3 +203,5 @@ plt.tight_layout()
 plt.title("Monthly Energy Production by Source")
 
 plt.show()
+
+df_simplified_calc.to_pickle('df_IT_CNOR.pkl')
