@@ -266,3 +266,5 @@ plt.tight_layout()
 
 # Mostra il grafico
 plt.show()
+
+df_simplified_calc.to_pickle('df_IT_CNOR.pkl')
