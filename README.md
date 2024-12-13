@@ -10,7 +10,6 @@ Here is an overview of the project structure:
 - **national_zones/**: Contains pickled data files and scripts for different national zones, including Spain, Italy, Austria, and Sweden.
 - **res_v1/**: Annual simulation results for capacity of version 1.
 - **res_v2/**: Annual simulation results for capacity of version 2.
-- **Dati_capacities_scenarios.xlsx**: Excel file containing data scenarios on capacities.
 - **Austria_optimization.py**: Optimization simulation script specific to Austria.
 - **Italy_optimization.py**: Optimization simulation script specific to Italy.
 - **Spain_optimization.py**: Optimization simulation script specific to Spain.
