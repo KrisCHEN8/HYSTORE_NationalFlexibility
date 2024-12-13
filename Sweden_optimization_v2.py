@@ -30,7 +30,7 @@ EER_df = pd.read_pickle(os.path.join(pickle_path, 'EER_2022_df.pkl'))
 COP_df.index = time_series
 EER_df.index = time_series
 
-hours = 6
+hours = 1
 
 heating_season = df_demand[df_demand['Sweden_heating_kWh'] > 0]
 avg_heating_demand = heating_season['Sweden_heating_kWh'].mean() * 0.001
