@@ -30,27 +30,37 @@ EER_df = pd.read_pickle(os.path.join(pickle_path, 'EER_2022_df.pkl'))
 COP_df.index = time_series
 EER_df.index = time_series
 
-hours = 12
+hours = 1
+
+heating_season = df_demand[df_demand['Italy_heating_kWh'] > 0]
+avg_heating_demand = heating_season['Italy_heating_kWh'].mean() * 0.001
+mean_COP = COP_df[coutry].mean()
+thermal_capacity_heating = avg_heating_demand * mean_COP
+
+cooling_season = df_demand[df_demand['Italy_cooling_kWh'] > 0]
+avg_cooling_demand = heating_season['Italy_cooling_kWh'].mean() * 0.001
+mean_EER = EER_df[coutry].mean()
+thermal_capacity_cooling = avg_cooling_demand * mean_EER
 
 Cm_dict_ave = {
-    'Cm_h_PCM': 254761.18 * 0.001 * hours,    # MWh
-    'Cm_c_PCM': 815840.28 * 0.001 * hours,    # MWh
-    'Cm_h_TCM': 254761.18 * 0.001 * hours,    # MWh
-    'Cm_c_TCM': 815840.28 * 0.001 * hours     # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,    # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,    # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,    # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours     # MWh
 }
 
 Cm_dict_70p = {
-    'Cm_h_PCM': 521523.24 * 0.001 * hours,   # MWh
-    'Cm_c_PCM': 1989612.33 * 0.001 * hours,   # MWh
-    'Cm_h_TCM': 521523.24 * 0.001 * hours,   # MWh
-    'Cm_c_TCM': 1989612.33 * 0.001 * hours   # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,   # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours   # MWh
 }
 
 Cm_dict_50p = {
-    'Cm_h_PCM': 372516.60 * 0.001 * hours,   # MWh
-    'Cm_c_PCM': 1421151.66 * 0.001 * hours,   # MWh
-    'Cm_h_TCM': 372516.60 * 0.001 * hours,   # MWh
-    'Cm_c_TCM': 1421151.66 * 0.001 * hours    # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,   # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours    # MWh
 }
 
 if solver == 'PSO':

@@ -30,27 +30,37 @@ EER_df = pd.read_pickle(os.path.join(pickle_path, 'EER_2022_df.pkl'))
 COP_df.index = time_series
 EER_df.index = time_series
 
-hours = 6
+hours = 12
+
+heating_season = df_demand[df_demand['Austria_heating_kWh'] > 0]
+avg_heating_demand = heating_season['Austria_heating_kWh'].mean() * 0.001
+mean_COP = COP_df[coutry].mean()
+thermal_capacity_heating = avg_heating_demand * mean_COP
+
+cooling_season = df_demand[df_demand['Austria_cooling_kWh'] > 0]
+avg_cooling_demand = heating_season['Austria_cooling_kWh'].mean() * 0.001
+mean_EER = EER_df[coutry].mean()
+thermal_capacity_cooling = avg_cooling_demand * mean_EER
 
 Cm_dict_ave = {
-    'Cm_h_PCM': 157664.92 * 0.001 * hours,   # MWh
-    'Cm_c_PCM': 1138.73 * 0.001 * hours,    # MWh
-    'Cm_h_TCM': 157664.92 * 0.001 * hours,   # MWh
-    'Cm_c_TCM': 1138.73 * 0.001 * hours    # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,    # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,    # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,    # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours     # MWh
 }
 
 Cm_dict_70p = {
-    'Cm_h_PCM': 255468.26 * 0.001 * hours,   # MWh
-    'Cm_c_PCM': 2202.34 * 0.001 * hours,   # MWh
-    'Cm_h_TCM': 255468.26 * 0.001 * hours,   # MWh
-    'Cm_c_TCM': 2202.34 * 0.001 * hours   # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,   # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours   # MWh
 }
 
 Cm_dict_50p = {
-    'Cm_h_PCM': 182477.33 * 0.001 * hours,   # MWh
-    'Cm_c_PCM': 1573.10 * 0.001 * hours,   # MWh
-    'Cm_h_TCM': 182477.33 * 0.001 * hours,   # MWh
-    'Cm_c_TCM': 1573.10 * 0.001 * hours   # MWh
+    'Cm_h_PCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_PCM': thermal_capacity_cooling * hours,   # MWh
+    'Cm_h_TCM': thermal_capacity_heating * hours,   # MWh
+    'Cm_c_TCM': thermal_capacity_cooling * hours    # MWh
 }
 
 if solver == 'Pyomo':
