@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import cvxpy as cp
 from datetime import timedelta
 
@@ -57,7 +56,7 @@ class PredictiveOptimizerCVXPY:
         while t_start < t_end:
             time_series = pd.date_range(start=t_start, periods=self.T, freq='1h')
 
-            # **Cooling Optimization**
+            # Cooling Optimization
 
             # CVXPY Variables
             PCM_disc_c = cp.Variable(self.T, nonneg=True)  # Cooling PCM discharge [MWh]

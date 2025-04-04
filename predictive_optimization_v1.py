@@ -201,8 +201,8 @@ class PredictiveOptimizerCVXPY:
 
                 # Update SoC for TCM and TCM (with the dynamic proportional loss for TCM)  # noqa: E501
                 constraints += [
-                    SoC_TCM_h[t + 1] == SoC_TCM_h[t] + 100 * (((TCM_char_h[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_h[t] * self.eta_TCM_h_dis) * self.alpha) / self.Cm_TCM_h),  # noqa: E501
-                    SoC_TCM_c[t + 1] == SoC_TCM_c[t] + 100 * (((TCM_char_c[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_c[t] * self.eta_TCM_c_dis) * self.alpha) / self.Cm_TCM_c)   # noqa: E501
+                    SoC_TCM_h[t + 1] == SoC_TCM_h[t] + 100 * (((TCM_char_h[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_h[t] * self.eta_TCM_h_dis) * cop[t]) / self.Cm_TCM_h),  # noqa: E501
+                    SoC_TCM_c[t + 1] == SoC_TCM_c[t] + 100 * (((TCM_char_c[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_c[t] * self.eta_TCM_c_dis) * eer[t]) / self.Cm_TCM_c)   # noqa: E501
                 ]
 
             surplus = self.df.loc[time_series, self.obj].values - df_results_pcm['y_PCM_h'].values - df_results_pcm['y_PCM_c'].values   # noqa: E501
