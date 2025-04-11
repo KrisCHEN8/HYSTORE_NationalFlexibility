@@ -9,6 +9,7 @@ solver = 'CVXPY'
 coutry = 'IT'      # Change with other coutries' abbreviations, e.g. ESP, SE, AUT  # noqa: E501
 pickle_path = './national_zones/pickled_df'
 df_agg = pd.read_pickle(os.path.join(pickle_path, f'df_agg_{coutry}.pkl'))
+df_emission = pd.read_pickle(os.path.join(pickle_path, 'emission.pkl'))
 
 df_demand = pd.read_pickle(os.path.join(pickle_path, 'df_demand.pkl'))
 
@@ -67,10 +68,12 @@ if solver == 'PSO':
     print('Pyomo is not available.')
 
 elif solver == 'CVXPY':
+    lambda_value = 0
     # Cm_ave
-    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, 12, COP_df['IT'], EER_df['IT'], Cm_dict_ave, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1])
-    df_results.index = time_series
+    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df[coutry], EER_df[coutry], Cm_dict_ave, 'surplus_RES')  # noqa: E501
+    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)[0]
+    date_range = pd.date_range(start=time_series[0], periods=len(df_results), freq='1h')
+    df_results.index = date_range
     df_results = df_results.loc[:, [
                 'x_PCM_h',
                 'y_PCM_h',
@@ -93,12 +96,12 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_V2/IT/results_IT_aveCm_V2_{hours}.xlsx', index=True)
+    df_results.to_excel(f'./res_V2/IT/results_IT_aveCm_V2_{hours}_lambda{lambda_value}.xlsx', index=True)   # noqa: E501
 
     # Cm_70%
-    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, 12, COP_df['IT'], EER_df['IT'], Cm_dict_70p, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1])
-    df_results.index = time_series
+    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df[coutry], EER_df[coutry], Cm_dict_70p, 'surplus_RES')  # noqa: E501
+    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)[0]
+    df_results.index = date_range
     df_results = df_results.loc[:, [
                 'x_PCM_h',
                 'y_PCM_h',
@@ -121,12 +124,12 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_V2/IT/results_IT_70PCm_V2_{hours}.xlsx', index=True)
+    df_results.to_excel(f'./res_V2/IT/results_IT_70PCm_V2_{hours}_lambda{lambda_value}.xlsx', index=True)   # noqa: E501
 
     # Cm_50%
-    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, 12, COP_df['IT'], EER_df['IT'], Cm_dict_50p, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1])
-    df_results.index = time_series
+    optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df[coutry], EER_df[coutry], Cm_dict_50p, 'surplus_RES')  # noqa: E501
+    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)[0]
+    df_results.index = date_range
     df_results = df_results.loc[:, [
                 'x_PCM_h',
                 'y_PCM_h',
@@ -149,4 +152,4 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_V2/IT/results_IT_50PCm_V2_{hours}.xlsx', index=True)
+    df_results.to_excel(f'./res_V2/IT/results_IT_50PCm_V2_{hours}_lambda{lambda_value}.xlsx', index=True)   # noqa: E501
