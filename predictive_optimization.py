@@ -154,7 +154,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='MOSEK', verbose=False)     # MINLP problem  # noqa: E501
+            problem.solve(verbose=False)     # MINLP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -255,7 +255,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(solver='COPT', verbose=False)     # MINLP problem  # noqa: E501
+            problem.solve(verbose=False)     # MINLP problem  # noqa: E501
 
             # Extract results
             results = {
