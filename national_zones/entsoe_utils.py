@@ -95,6 +95,8 @@ def calculate_emission_factor(df: pd.DataFrame) -> pd.DataFrame:
     other_emission = 870 * 1e3 * 1e-6   # ton CO2/MWh  coal
     fossilgas_emission = 368.3 * 1e3 * 1e-6  # ton CO2/MWh
     fossiloil_emission = 548.9 * 1e3 * 1e-6  # ton CO2/MWh
+    fossilpeat_emission = 1178 * 1e3 * 1e-6  # ton CO2/MWh
+    fossiloilshale_emission = 800 * 1e3 * 1e-6  # ton CO2/MWh
 
     df_generation = df.copy()
 
@@ -120,8 +122,16 @@ def calculate_emission_factor(df: pd.DataFrame) -> pd.DataFrame:
     if 'Fossil Brown coal/Lignite' in df_generation.columns:
         df_generation['co2_fossilbrowncoal'] = df_generation['Fossil Brown coal/Lignite'] * other_emission
 
+    if 'Fossil Peat' in df_generation.columns:
+        df_generation['co2_fossilpeat'] = df_generation['Fossil Peat'] * fossilpeat_emission
+
+    if 'Fossil Oil shale' in df_generation.columns:
+        df_generation['co2_fossiloilshale'] = df_generation['Fossil Oil shale'] * fossiloilshale_emission
+
     # sum the emissions
-    emission_cols = ['co2_other', 'co2_fossilcoal', 'co2_fossilgas', 'co2_fossiloil', 'co2_fossilhcoal', 'co2_fossilbrowncoal']
+    emission_cols = ['co2_other', 'co2_fossilcoal', 'co2_fossilgas',
+                     'co2_fossiloil', 'co2_fossilhcoal', 'co2_fossilbrowncoal',
+                     'co2_fossilpeat', 'co2_fossiloilshale']
     existing_cols = [col for col in emission_cols if col in df_generation.columns]
     df_generation['co2_total'] = df_generation[existing_cols].sum(axis=1)
 

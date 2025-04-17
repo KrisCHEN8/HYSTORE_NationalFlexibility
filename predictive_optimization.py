@@ -122,6 +122,15 @@ class PredictiveOptimizerCVXPY:
             d_h = self.df.loc[time_series, 'D_H'].values
             d_c = self.df.loc[time_series, 'D_C'].values
 
+            print('Demand for heating is:')
+            print(d_h)
+            print('Demand for cooling is:')
+            print(d_c)
+            print('SoC_h is:')
+            print(SoC_PCM_h_init)
+            print('SoC_c is:')
+            print(SoC_PCM_c_init)
+
             cumulative_future_demand_c = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_C']) for t in range(self.T)]  # noqa: E501
             cumulative_future_demand_h = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_H']) for t in range(self.T)]  # noqa: E501
 
@@ -148,6 +157,8 @@ class PredictiveOptimizerCVXPY:
 
             f_carbon_pcm = cp.sum(cp.multiply(PCM_disc_h + PCM_disc_c, co2))
 
+            # change objective function with everything else is the same
+
             # Objective function: Minimize surplus energy used for charging
             objective = cp.Minimize(f_surplus_pcm - lambda_value * f_carbon_pcm + 1e9 * (cp.sum(epsilon_c) + cp.sum(epsilon_h)))
             # Formulate the problem
@@ -173,7 +184,7 @@ class PredictiveOptimizerCVXPY:
 
             df_results_pcm = pd.DataFrame(results)
 
-            print(df_results_pcm.iloc[-1])
+            # print(df_results_pcm.iloc[-1])
 
             # Update initial conditions for the next iteration
             self.SoC_PCM_h_init.append(SoC_PCM_h.value[-1])
@@ -225,12 +236,12 @@ class PredictiveOptimizerCVXPY:
             d_h = self.df.loc[time_series, 'D_H'].values - (df_results_pcm['x_PCM_h'].values)
             d_c = self.df.loc[time_series, 'D_C'].values - (df_results_pcm['x_PCM_c'].values)
 
-            print('Surplus is:')
-            print(surplus)
-            print('Demand for heating is:')
-            print(d_h)
-            print('Demand for cooling is:')
-            print(d_c)
+            # print('Surplus is:')
+            # print(surplus)
+            # print('Demand for heating is:')
+            # print(d_h)
+            # print('Demand for cooling is:')
+            # print(d_c)
 
             # self.df.loc[time_series, 'D_C'] = d_c
             # self.df.loc[time_series, 'D_H'] = d_h
