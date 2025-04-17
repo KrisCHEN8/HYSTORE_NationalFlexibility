@@ -66,12 +66,12 @@ class PredictiveOptimizerCVXPY:
 
     def opt(self, t_start, t_end, lambda_value):
         df_results = pd.DataFrame()
-        SoC_PCM_h_init = self.SoC_PCM_h_init[-1]
-        SoC_PCM_c_init = self.SoC_PCM_c_init[-1]
 
         while t_start < t_end:
             time_series = pd.date_range(start=t_start, periods=self.T, freq='1h')  # noqa: E501
 
+            SoC_PCM_h_init = self.SoC_PCM_h_init[-1]
+            SoC_PCM_c_init = self.SoC_PCM_c_init[-1]
 
             # CVXPY Variables
             PCM_disc_c = cp.Variable(self.T, nonneg=True)     # Cooling PCM discharge in electric [MWh] # noqa: E501
@@ -154,7 +154,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(verbose=False)     # MINLP problem  # noqa: E501
+            problem.solve(solver=cp.MOSEK, verbose=False)     # MINLP problem  # noqa: E501
 
             # Extract results
             results = {
@@ -172,6 +172,8 @@ class PredictiveOptimizerCVXPY:
             }
 
             df_results_pcm = pd.DataFrame(results)
+
+            print(df_results_pcm.iloc[-1])
 
             # Update initial conditions for the next iteration
             self.SoC_PCM_h_init.append(SoC_PCM_h.value[-1])
@@ -208,9 +210,9 @@ class PredictiveOptimizerCVXPY:
             for t in range(self.T):
                 constraints += [
                     SoC_TCM_h[t + 1] >= self.SoC_TCM_min,
-                    SoC_TCM_h[t + 1] <= self.SoC_TCM_max,   # noqa: E501
+                    SoC_TCM_h[t + 1] <= self.SoC_TCM_max,
                     SoC_TCM_c[t + 1] >= self.SoC_TCM_min,
-                    SoC_TCM_c[t + 1] <= self.SoC_TCM_max   # noqa: E501
+                    SoC_TCM_c[t + 1] <= self.SoC_TCM_max
                 ]
 
                 # Update SoC for TCM and TCM (with the dynamic proportional loss for TCM)  # noqa: E501
@@ -219,9 +221,19 @@ class PredictiveOptimizerCVXPY:
                     SoC_TCM_h[t + 1] == SoC_TCM_h[t] + 100 * (((TCM_char_h[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_h[t] * self.eta_TCM_h_dis) * cop[t]) / self.Cm_TCM_h)   # noqa: E501
                 ]
 
-            surplus = self.df.loc[time_series, self.obj].values - (df_results_pcm['y_PCM_c'].values + df_results_pcm['y_PCM_h'].values)    # in MWh
+            surplus = np.round(self.df.loc[time_series, self.obj].values - (df_results_pcm['y_PCM_c'].values + df_results_pcm['y_PCM_h'].values), 2)    # in MWh
             d_h = self.df.loc[time_series, 'D_H'].values - (df_results_pcm['x_PCM_h'].values)
             d_c = self.df.loc[time_series, 'D_C'].values - (df_results_pcm['x_PCM_c'].values)
+
+            print('Surplus is:')
+            print(surplus)
+            print('Demand for heating is:')
+            print(d_h)
+            print('Demand for cooling is:')
+            print(d_c)
+
+            # self.df.loc[time_series, 'D_C'] = d_c
+            # self.df.loc[time_series, 'D_H'] = d_h
 
             cumulative_future_demand_c = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_C']) for t in range(self.T)]  # noqa: E501
             cumulative_future_demand_h = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_H']) for t in range(self.T)]  # noqa: E501
@@ -255,7 +267,7 @@ class PredictiveOptimizerCVXPY:
             problem = cp.Problem(objective, constraints)
 
             # Solve the problem
-            problem.solve(verbose=False)     # MINLP problem  # noqa: E501
+            problem.solve(solver=cp.COPT, verbose=False)     # MINLP problem  # noqa: E501
 
             # Extract results
             results = {
