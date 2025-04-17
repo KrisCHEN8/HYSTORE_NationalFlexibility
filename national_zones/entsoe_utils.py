@@ -3,7 +3,7 @@ from entsoe import EntsoePandasClient
 
 
 dict_columns = {
-    'AT': [0, 2, 4, 6, 8, 10, 12, 14, 17, 18, 20, 22, 24],
+    'AT': [0,2,4,6,8,10,12,14,17,18,20,22,24],
     'ES': [1,2,3,4,5,6,7,15,0,8,11,13,14,16,17,18,19,20,9,12],
     'SE_4': [0,1,2,3,4],
     'SE_3': [0,1,2,3,4,5,6],
@@ -115,10 +115,13 @@ def calculate_emission_factor(df: pd.DataFrame) -> pd.DataFrame:
         df_generation['co2_fossiloil'] = df_generation['Fossil Oil'] * fossiloil_emission
 
     if 'Fossil hard coal' in df_generation.columns:
-        df_generation['co2_fossilhcoal'] = df_generation['Fossil hard coal'] * other_emission
+        df_generation['co2_fossilhcoal'] = df_generation['Fossil hard coal'] * other_emission   
+
+    if 'Fossil Brown coal/Lignite' in df_generation.columns:
+        df_generation['co2_fossilbrowncoal'] = df_generation['Fossil Brown coal/Lignite'] * other_emission
 
     # sum the emissions
-    emission_cols = ['co2_other', 'co2_fossilcoal', 'co2_fossilgas', 'co2_fossiloil', 'co2_fossilhcoal']
+    emission_cols = ['co2_other', 'co2_fossilcoal', 'co2_fossilgas', 'co2_fossiloil', 'co2_fossilhcoal', 'co2_fossilbrowncoal']
     existing_cols = [col for col in emission_cols if col in df_generation.columns]
     df_generation['co2_total'] = df_generation[existing_cols].sum(axis=1)
 
@@ -134,6 +137,7 @@ def calculate_emission_factor(df: pd.DataFrame) -> pd.DataFrame:
     return df_generation
 
 
+##  example usage of the function  ##
 if __name__ == "__main__":
     start = pd.Timestamp('20220101', tz='Europe/Rome')
     end = pd.Timestamp('20230101', tz='Europe/Rome')
