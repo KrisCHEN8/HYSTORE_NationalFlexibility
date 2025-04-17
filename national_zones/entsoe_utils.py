@@ -1,6 +1,4 @@
-import os
 import pandas as pd
-import numpy as np
 from entsoe import EntsoePandasClient
 
 
@@ -105,7 +103,6 @@ def calculate_emission_factor(df: pd.DataFrame) -> pd.DataFrame:
         df_generation['co2_other'] = df_generation['Other'] * other_emission
 
     # If the 'Fossil Coal-derived gas' column is present, calculate co2 emissions.
-    # Note: In your example, the same `other_emission` is applied.
     if 'Fossil Coal-derived gas' in df_generation.columns:
         df_generation['co2_fossilcoal'] = df_generation['Fossil Coal-derived gas'] * other_emission
 
@@ -142,5 +139,5 @@ if __name__ == "__main__":
     end = pd.Timestamp('20230101', tz='Europe/Rome')
 
     entsoe_data = EntsoeData('AT', start, end, range_time_generation="1h")
-    df_generation = entsoe_data.get_generation_data(austria=True)
+    df_generation = entsoe_data.get_generation_data()
     print(df_generation.columns)
