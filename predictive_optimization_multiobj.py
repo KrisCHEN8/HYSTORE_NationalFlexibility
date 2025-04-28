@@ -122,14 +122,14 @@ class PredictiveOptimizerCVXPY:
             d_h = self.df.loc[time_series, 'D_H'].values
             d_c = self.df.loc[time_series, 'D_C'].values
 
-            print('Demand for heating is:')
-            print(d_h)
-            print('Demand for cooling is:')
-            print(d_c)
-            print('SoC_h is:')
-            print(SoC_PCM_h_init)
-            print('SoC_c is:')
-            print(SoC_PCM_c_init)
+            # print('Demand for heating is:')
+            # print(d_h)
+            # print('Demand for cooling is:')
+            # print(d_c)
+            # print('SoC_h is:')
+            # print(SoC_PCM_h_init)
+            # print('SoC_c is:')
+            # print(SoC_PCM_c_init)
 
             cumulative_future_demand_c = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_C']) for t in range(self.T)]  # noqa: E501
             cumulative_future_demand_h = [sum(self.df.loc[time_series[t]:time_series[t] + timedelta(hours=self.T), 'D_H']) for t in range(self.T)]  # noqa: E501
