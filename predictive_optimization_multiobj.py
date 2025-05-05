@@ -3,6 +3,7 @@ import numpy as np
 import cvxpy as cp
 from datetime import timedelta
 
+
 class PredictiveOptimizerCVXPY:
     def __init__(self, D_H, D_C, df_simplified_calc, df_emission, horizon, COP, EER, Cm_dict, optimization_obj):
         self.Cm_TCM_h = Cm_dict['Cm_h_TCM']

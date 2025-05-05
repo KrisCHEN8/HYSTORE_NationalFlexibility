@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from predictive_optimization import PredictiveOptimizerCVXPY  # noqa: E501
+from predictive_optimization_multiobj import PredictiveOptimizerCVXPY  # noqa: E501
 import warnings
 warnings.filterwarnings("ignore", message="loaded more than 1 DLL from .libs")
 
@@ -79,7 +79,7 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/IT/results_IT_aveCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_multiobj_modified/IT/results_IT_aveCm_{hours}_lambda{lambda_value}.xlsx', index=True)
 
     # Cm_70%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df['IT'], EER_df['IT'], Cm_dict_70p, 'surplus_RES')  # noqa: E501
@@ -90,7 +90,7 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/IT/results_IT_70PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_multiobj_modified/IT/results_IT_70PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
 
     # Cm_50%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df['IT'], EER_df['IT'], Cm_dict_50p, 'surplus_RES')  # noqa: E501
@@ -101,4 +101,4 @@ elif solver == 'CVXPY':
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/IT/results_IT_50PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_multiobj_modified/IT/results_IT_50PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
