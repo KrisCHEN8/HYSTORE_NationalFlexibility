@@ -120,11 +120,16 @@ class PredictiveOptimizerCVXPY:
             constraints += self.enforce_min_duration(z_char_c, 3, self.T)
             constraints += self.enforce_min_duration(z_disc_c, 2, self.T)
 
-            f_surplus_pcm = cp.sum(surplus - (PCM_char_c + PCM_char_h))
+            cooling_weight = []
+            heating_weight = []
 
-            objective = cp.Minimize(f_surplus_pcm + 1e9 * (cp.sum(epsilon_c) + cp.sum(epsilon_h)))
+            for t in range(self.T):
+                cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
+                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
+
+            objective = cp.Minimize(cp.sum(d_h - cp.multiply(PCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(PCM_disc_c, cooling_weight)) + cp.sum(surplus - cp.multiply(PCM_char_h, heating_weight) - cp.multiply(PCM_char_c, cooling_weight)) + 1e9 * (cp.sum(epsilon_c) + cp.sum(epsilon_h)))
             problem = cp.Problem(objective, constraints)
-            problem.solve(solver=cp.MOSEK, verbose=False)
+            problem.solve(solver='CPLEX', verbose=False)
 
             results = {
                 'x_PCM_h': PCM_disc_h.value,
@@ -207,11 +212,17 @@ class PredictiveOptimizerCVXPY:
             constraints += self.enforce_min_duration(z_char_c, 5, self.T)
             constraints += self.enforce_min_duration(z_disc_c, 3, self.T)
 
-            f_surplus_TCM = cp.sum(surplus - (TCM_char_c + TCM_char_h))
+            cooling_weight = []
+            heating_weight = []
 
-            objective = cp.Minimize(f_surplus_TCM)
+            for t in range(self.T):
+                cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
+                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
+
+            # Objective function: Minimize surplus energy used for charging
+            objective = cp.Minimize(cp.sum(d_h - cp.multiply(TCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(TCM_disc_c, cooling_weight)) + cp.sum(surplus - cp.multiply(TCM_char_h, heating_weight) - cp.multiply(TCM_char_c, cooling_weight)))            
             problem = cp.Problem(objective, constraints)
-            problem.solve(solver=cp.COPT, verbose=False)
+            problem.solve(solver='CPLEX', verbose=False)
 
             results = {
                 'x_TCM_h': TCM_disc_h.value,
