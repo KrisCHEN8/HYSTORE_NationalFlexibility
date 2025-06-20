@@ -37,13 +37,6 @@ class PredictiveOptimizerCVXPY:
         self.SoC_TCM_h_init = [self.SoC_TCM_min]
         self.SoC_TCM_c_init = [self.SoC_TCM_min]
 
-    def enforce_min_duration(self, z, duration, T):
-        constraints = []
-        for t in range(T - duration + 1):
-            prev = z[t - 1] if t > 0 else 0
-            constraints.append(z[t] - prev <= cp.sum(z[t:t + duration]))
-        return constraints
-
     def opt(self, t_start, t_end):
         df_results = pd.DataFrame()
 
@@ -66,12 +59,6 @@ class PredictiveOptimizerCVXPY:
             allocated_surplus_c = cp.Variable(self.T, nonneg=True)
             epsilon_h = cp.Variable(self.T)
             epsilon_c = cp.Variable(self.T)
-            z_char_h = cp.Variable(self.T, boolean=True)
-            z_disc_h = cp.Variable(self.T, boolean=True)
-            z_char_c = cp.Variable(self.T, boolean=True)
-            z_disc_c = cp.Variable(self.T, boolean=True)
-
-            M = 1e5
 
             constraints = [
                 SoC_PCM_h[0] == SoC_PCM_h_init,
@@ -90,11 +77,7 @@ class PredictiveOptimizerCVXPY:
                     SoC_PCM_c[t + 1] >= self.SoC_PCM_min,
                     SoC_PCM_c[t + 1] <= self.SoC_PCM_max,
                     SoC_PCM_c[t + 1] == SoC_PCM_c[t] + 100 * ((PCM_char_c[t] * eer[t] - PCM_disc_c[t] * eer[t]) / self.Cm_PCM_c) * self.eta_PCM - self.f_loss_PCM * (1 - epsilon_c[t]),
-                    SoC_PCM_h[t + 1] == SoC_PCM_h[t] + 100 * ((PCM_char_h[t] * cop[t] - PCM_disc_h[t] * cop[t]) / self.Cm_PCM_h) * self.eta_PCM - self.f_loss_PCM * (1 - epsilon_h[t]),
-                    PCM_char_h[t] <= M * z_char_h[t],
-                    PCM_disc_h[t] <= M * z_disc_h[t],
-                    PCM_char_c[t] <= M * z_char_c[t],
-                    PCM_disc_c[t] <= M * z_disc_c[t]
+                    SoC_PCM_h[t + 1] == SoC_PCM_h[t] + 100 * ((PCM_char_h[t] * cop[t] - PCM_disc_h[t] * cop[t]) / self.Cm_PCM_h) * self.eta_PCM - self.f_loss_PCM * (1 - epsilon_h[t])
                 ]
 
             surplus = self.df.loc[time_series, self.obj].values
@@ -115,28 +98,23 @@ class PredictiveOptimizerCVXPY:
                     PCM_disc_h[t] <= d_h[t] * (1 - u_h[t])
                 ]
 
-            constraints += self.enforce_min_duration(z_char_h, 3, self.T)
-            constraints += self.enforce_min_duration(z_disc_h, 2, self.T)
-            constraints += self.enforce_min_duration(z_char_c, 3, self.T)
-            constraints += self.enforce_min_duration(z_disc_c, 2, self.T)
-
             cooling_weight = []
             heating_weight = []
 
             for t in range(self.T):
                 cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
-                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating
+                heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
+
+            f_demand_weight = cp.sum(d_h - cp.multiply(PCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(PCM_disc_c, cooling_weight))
+            f_surplus_pcm = cp.sum(surplus - cp.multiply(PCM_char_h, heating_weight) - cp.multiply(PCM_char_c, cooling_weight)) + f_demand_weight
 
             # Split long objective into multiple lines for better readability
             objective = cp.Minimize(
-                cp.sum(d_h - cp.multiply(PCM_disc_h, heating_weight)) +
-                cp.sum(d_c - cp.multiply(PCM_disc_c, cooling_weight)) +
-                cp.sum(surplus - cp.multiply(PCM_char_h, heating_weight) -
-                cp.multiply(PCM_char_c, cooling_weight)) +
+                f_surplus_pcm +
                 1e9 * (cp.sum(epsilon_c) + cp.sum(epsilon_h))
             )
             problem = cp.Problem(objective, constraints)
-            problem.solve(solver='CPLEX', verbose=False)
+            problem.solve(solver='MOSEK', verbose=False)
 
             results = {
                 'x_PCM_h': PCM_disc_h.value,
@@ -172,12 +150,7 @@ class PredictiveOptimizerCVXPY:
             u_c = cp.Variable(self.T, boolean=True)
             allocated_surplus_h = cp.Variable(self.T, nonneg=True)
             allocated_surplus_c = cp.Variable(self.T, nonneg=True)
-            z_char_h = cp.Variable(self.T, boolean=True)
-            z_disc_h = cp.Variable(self.T, boolean=True)
-            z_char_c = cp.Variable(self.T, boolean=True)
-            z_disc_c = cp.Variable(self.T, boolean=True)
 
-            M = 1e3
             constraints = [
                 SoC_TCM_h[0] == SoC_TCM_h_init,
                 SoC_TCM_c[0] == SoC_TCM_c_init
@@ -201,10 +174,6 @@ class PredictiveOptimizerCVXPY:
                     SoC_TCM_c[t + 1] <= self.SoC_TCM_max,
                     SoC_TCM_c[t + 1] == SoC_TCM_c[t] + 100 * (((TCM_char_c[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_c[t] * self.eta_TCM_c_dis) * eer[t]) / self.Cm_TCM_c),
                     SoC_TCM_h[t + 1] == SoC_TCM_h[t] + 100 * (((TCM_char_h[t] * self.eta_TCM_ch) * self.alpha - (TCM_disc_h[t] * self.eta_TCM_h_dis) * cop[t]) / self.Cm_TCM_h),
-                    TCM_char_h[t] <= M * z_char_h[t],
-                    TCM_disc_h[t] <= M * z_disc_h[t],
-                    TCM_char_c[t] <= M * z_char_c[t],
-                    TCM_disc_c[t] <= M * z_disc_c[t],
                     allocated_surplus_h[t] + allocated_surplus_c[t] <= surplus[t],
                     allocated_surplus_h[t] <= cumulative_future_demand_h[t] * u_h[t],
                     allocated_surplus_c[t] <= cumulative_future_demand_c[t] * u_c[t],
@@ -214,11 +183,6 @@ class PredictiveOptimizerCVXPY:
                     TCM_disc_h[t] <= d_h[t] * (1 - u_h[t])
                 ]
 
-            constraints += self.enforce_min_duration(z_char_h, 5, self.T)
-            constraints += self.enforce_min_duration(z_disc_h, 3, self.T)
-            constraints += self.enforce_min_duration(z_char_c, 5, self.T)
-            constraints += self.enforce_min_duration(z_disc_c, 3, self.T)
-
             cooling_weight = []
             heating_weight = []
 
@@ -226,15 +190,13 @@ class PredictiveOptimizerCVXPY:
                 cooling_weight.append(np.maximum(1, d_c[t] / (d_h[t] + 1e-4)))  # Weight for cooling  # noqa: E501
                 heating_weight.append(np.maximum(1, d_h[t] / (d_c[t] + 1e-4)))  # Weight for heating  # noqa: E501
 
+            f_demand_weight = cp.sum(d_h - cp.multiply(TCM_disc_h, heating_weight)) + cp.sum(d_c - cp.multiply(TCM_disc_c, cooling_weight))
+            f_surplus_tcm = cp.sum(surplus - cp.multiply(TCM_char_h, heating_weight) - cp.multiply(TCM_char_c, cooling_weight)) + f_demand_weight
+
             # Objective function: Minimize surplus energy used for charging
-            objective = cp.Minimize(
-                cp.sum(d_h - cp.multiply(TCM_disc_h, heating_weight)) +
-                cp.sum(d_c - cp.multiply(TCM_disc_c, cooling_weight)) +
-                cp.sum(surplus - cp.multiply(TCM_char_h, heating_weight) -
-                cp.multiply(TCM_char_c, cooling_weight))
-            )
+            objective = cp.Minimize(f_surplus_tcm)
             problem = cp.Problem(objective, constraints)
-            problem.solve(solver='CPLEX', verbose=False)
+            problem.solve(solver='MOSEK', verbose=False)
 
             results = {
                 'x_TCM_h': TCM_disc_h.value,

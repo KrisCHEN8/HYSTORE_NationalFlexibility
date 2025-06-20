@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from predictive_optimization_singleobj import PredictiveOptimizerCVXPY  # noqa: E501
+from predictive_optimization_singleobj_orig import PredictiveOptimizerCVXPY  # noqa: E501
 import warnings
 warnings.filterwarnings("ignore", message="loaded more than 1 DLL from .libs")
 

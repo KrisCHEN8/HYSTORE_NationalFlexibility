@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from predictive_optimization_multiobj import PredictiveOptimizerCVXPY  # noqa: E501
+from predictive_optimization_multiobj_orig import PredictiveOptimizerCVXPY  # noqa: E501
 import warnings
 warnings.filterwarnings("ignore", message="loaded more than 1 DLL from .libs")
 
@@ -64,7 +64,7 @@ Cm_dict_50p = {
     'Cm_c_TCM': thermal_capacity_cooling * hours    # MWh
 }
 
-lambda_value = 1
+lambda_value = 0.3
 
 if solver == 'PSO':
     print('Pyomo is not available.')
