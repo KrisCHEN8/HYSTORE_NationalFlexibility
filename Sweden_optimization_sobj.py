@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from predictive_optimization import PredictiveOptimizerCVXPY  # noqa: E501
+from predictive_optimization_singleobj import PredictiveOptimizerCVXPY  # noqa: E501
 import warnings
 warnings.filterwarnings("ignore", message="loaded more than 1 DLL from .libs")
 
@@ -62,41 +62,39 @@ Cm_dict_50p = {
     'Cm_c_TCM': thermal_capacity_cooling * hours    # MWh
 }
 
-lambda_value = 1
-
 if solver == 'Pyomo':
     print('Pyomo not available for now.')
 
 elif solver == 'CVXPY':
     # Cm_ave
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df['SE'], EER_df['SE'], Cm_dict_ave, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)
+    df_results = optimizer.opt(time_series[0], time_series[-1])
     df_results.index = time_series
     df_results['actual_load'] = df_agg['Actual load'].values
     heating = - df_results['x_TCM_h'] - df_results['x_PCM_h']  # noqa: E501
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/SE/results_SE_aveCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_singleobj/SE/results_SE_aveCm_{hours}.xlsx', index=True)
 
     # Cm_70%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df['SE'], EER_df['SE'], Cm_dict_70p, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)
+    df_results = optimizer.opt(time_series[0], time_series[-1])
     df_results.index = time_series
     df_results['actual_load'] = df_agg['Actual load'].values
     heating = - df_results['x_TCM_h'] - df_results['x_PCM_h']  # noqa: E501
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/SE/results_SE_70PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_singleobj/SE/results_SE_70PCm_{hours}.xlsx', index=True)
 
     # Cm_50%
     optimizer = PredictiveOptimizerCVXPY(D_H, D_C, df_agg, df_emission, 12, COP_df['SE'], EER_df['SE'], Cm_dict_50p, 'surplus_RES')  # noqa: E501
-    df_results = optimizer.opt(time_series[0], time_series[-1], lambda_value)
+    df_results = optimizer.opt(time_series[0], time_series[-1])
     df_results.index = time_series
     df_results['actual_load'] = df_agg['Actual load'].values
     heating = - df_results['x_TCM_h'] - df_results['x_PCM_h']  # noqa: E501
     cooling = - df_results['x_TCM_c'] - df_results['x_PCM_c']  # noqa: E501
     df_results['modified_load'] = df_results['actual_load'] + heating + cooling
     df_results['surplus_optimized'] = df_results['surplus'] - (df_results['y_TCM_h'] + df_results['y_PCM_h'] + df_results['y_TCM_c'] + df_results['y_PCM_c'])  # noqa: E501
-    df_results.to_excel(f'./res_multiobj/SE/results_SE_50PCm_{hours}_lambda{lambda_value}.xlsx', index=True)
+    df_results.to_excel(f'./res_singleobj/SE/results_SE_50PCm_{hours}.xlsx', index=True)
